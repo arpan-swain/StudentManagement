@@ -104,24 +104,50 @@ class EditDialog(QDialog):
         #Can also use a grid but vbox will be easy here
         layout = QVBoxLayout()
 
-        self.student_name = QLineEdit()
+
+        #Get the name of student on the row on which user clicked
+        row_num = main_window.table.currentRow()
+        student_name = main_window.table.item(row_num,1).text()
+
+        self.student_name = QLineEdit(student_name)
         self.student_name.setPlaceholderText("Name")
         layout.addWidget(self.student_name)
 
+        #Get the Id of student
+        self.student_id = main_window.table.item(row_num,0).text()
+
+        #Get the course name
+        student_course_name = main_window.table.item(row_num, 2).text()
         self.course_name = QComboBox()
         courses = ["Biology", "Math", "Physics", "Astronomy"]
         self.course_name.addItems(courses)
+        self.course_name.setCurrentText(student_course_name)
         layout.addWidget(self.course_name)
 
-        self.mobile_num = QLineEdit()
+        # Same for mob
+        mob = main_window.table.item(row_num, 3).text()
+        self.mobile_num = QLineEdit(mob)
         self.mobile_num.setPlaceholderText("Mobile")
         layout.addWidget(self.mobile_num)
 
-        button =QPushButton("Register")
-        button.clicked.connect(self.add_student)
+        button =QPushButton("Update")
+        button.clicked.connect(self.update_student)
         layout.addWidget(button)
 
         self.setLayout(layout)
+
+    def update_student(self):
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        cursor.execute("UPDATE students SET name = ?, course = ?, mobile = ? WHERE id = ?",
+                       (self.student_name.text(),self.course_name.itemText(self.course_name.currentIndex()),
+                        self.mobile_num.text(), self.student_id))
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        #Refresh the data
+        main_window.load_data()
 
 
 class InsertDialog(QDialog):
