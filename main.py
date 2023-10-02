@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QMainWindow,QApplication,QWidget, QGridLayout,QLabel,QLineEdit,QPushButton,QTableWidget,QTableWidgetItem,\
-    QDialog,QVBoxLayout,QComboBox,QToolBar
+    QDialog,QVBoxLayout,QComboBox,QToolBar, QStatusBar
 from PyQt6.QtGui import QAction,QIcon
 from PyQt6.QtCore import Qt
 import sys
@@ -41,6 +41,29 @@ class MainWindow(QMainWindow):
         toolbar.addAction(add_student_action)
         toolbar.addAction(search_action)
 
+        #Create a Status Bar
+        self.statusbar = QStatusBar()
+        self.setStatusBar(self.statusbar)
+
+        #Detect a Click
+        self.table.cellClicked.connect(self.cell_clicked)
+
+    def cell_clicked(self):
+        edit_button = QPushButton("Edit Record")
+        edit_button.clicked.connect(self.edit)
+
+        delete_button = QPushButton("Delete Record")
+        delete_button.clicked.connect(self.delete)
+
+        #fixing multiple edit and del button
+        children = self.findChildren(QPushButton)
+        if children:
+            for child in children:
+                self.statusbar.removeWidget(child)
+
+        self.statusbar.addWidget(edit_button)
+        self.statusbar.addWidget(delete_button)
+
     def load_data(self):
         connection = sqlite3.connect("database.db")
         #The following is a cursor object.. u can cvt it to list and then print to see what its structure looks like
@@ -60,6 +83,46 @@ class MainWindow(QMainWindow):
     def search(self):
         dialog = SearchDialog()
         dialog.exec()
+
+    def edit(self):
+        dialog = EditDialog()
+        dialog.exec()
+
+    def delete(self):
+        dialog = DeleteDialog()
+        dialog.exec()
+
+class DeleteDialog(QDialog):
+    pass
+class EditDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Insert Student Data")
+        self.setFixedWidth(300)
+        self.setFixedHeight(300)
+
+        #Can also use a grid but vbox will be easy here
+        layout = QVBoxLayout()
+
+        self.student_name = QLineEdit()
+        self.student_name.setPlaceholderText("Name")
+        layout.addWidget(self.student_name)
+
+        self.course_name = QComboBox()
+        courses = ["Biology", "Math", "Physics", "Astronomy"]
+        self.course_name.addItems(courses)
+        layout.addWidget(self.course_name)
+
+        self.mobile_num = QLineEdit()
+        self.mobile_num.setPlaceholderText("Mobile")
+        layout.addWidget(self.mobile_num)
+
+        button =QPushButton("Register")
+        button.clicked.connect(self.add_student)
+        layout.addWidget(button)
+
+        self.setLayout(layout)
+
 
 class InsertDialog(QDialog):
     def __init__(self):
